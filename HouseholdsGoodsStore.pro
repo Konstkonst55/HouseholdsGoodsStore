@@ -10,15 +10,12 @@ CONFIG += c++17
 
 SOURCES += \
     database.cpp \
-    databaseconfig.cpp \
     main.cpp \
     authwindow.cpp
 
 HEADERS += \
     authwindow.h \
-    database.h \
-    databaseconfig.h \
-    enums.h
+    database.h
 
 FORMS += \
     authwindow.ui
@@ -27,3 +24,6 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    resources.qrc
