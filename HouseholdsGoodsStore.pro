@@ -9,15 +9,18 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    adminwindow.cpp \
     database.cpp \
     main.cpp \
     authwindow.cpp
 
 HEADERS += \
+    adminwindow.h \
     authwindow.h \
     database.h
 
 FORMS += \
+    adminwindow.ui \
     authwindow.ui
 
 # Default rules for deployment.
