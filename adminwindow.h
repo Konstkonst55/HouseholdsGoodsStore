@@ -11,6 +11,8 @@
 #include <QLabel>
 #include <QToolBar>
 #include <QRadioButton>
+#include <QComboBox>
+#include "database.h"
 
 namespace Ui
 {
@@ -46,8 +48,11 @@ private slots:
 
     void onTableSelectionChanged();
 
+    void on_pbAccount_clicked();
+
 private:
     Ui::AdminWindow *ui;
+    int currentUserId;
 
     QMenuBar *menuBar;
     QMenu *fileMenu;
@@ -73,6 +78,9 @@ private:
     QPushButton *suppliesExportBtn;
     QPushButton *salesExportBtn;
 
+    QAction *profitReportAction;
+    QAction *popularReportAction;
+
     void setupMenuBar();
     void setupPages();
     void setupProductsPage();
@@ -82,6 +90,20 @@ private:
     void loadProductsData();
     void loadSuppliesData();
     void loadSalesData();
+
+    void showAddProductForm(int productId = -1);
+    void showAddSupplyForm();
+    void showReceiptForm(int saleId);
+    void loadCategoriesToCombo(QComboBox *combo);
+    void loadProductsToCombo(QComboBox *combo);
+
+    void searchProducts(const QString &text);
+    void searchSupplies(const QString &text);
+    void searchSales(const QString &text);
+
+    void updateProductsTable(const QList<Product> &products);
+    void updateSuppliesTable(const QList<Supply> &supplies);
+    void updateSalesTable(const QList<Sale> &sales);
 
     QString tableToCSV(QTableWidget *table);
     void saveTableToCSV(QTableWidget *table);

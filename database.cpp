@@ -981,6 +981,72 @@ QString Database::generateReceiptNumber()
 
     return prefix + timestamp + random;
 }
+
+QList<ProductCategory> Database::getAllCategories()
+{
+    QList<ProductCategory> categories;
+
+    QSqlQuery query = prepareQuery(
+        "SELECT id, name, created_at FROM product_categories ORDER BY name");
+
+    if (!executeQuery(query, "")) {
+        return categories;
+    }
+
+    while (query.next()) {
+        ProductCategory category;
+        category.id = query.value(0).toInt();
+        category.name = query.value(1).toString();
+        category.createdAt = query.value(2).toDateTime();
+
+        categories.append(category);
+    }
+
+    return categories;
+}
+
+ProductCategory Database::getCategoryById(int categoryId)
+{
+    ProductCategory category;
+    category.id = -1;
+
+    QSqlQuery query = prepareQuery(
+        "SELECT id, name, created_at FROM product_categories WHERE id = :id");
+    query.bindValue(":id", categoryId);
+
+    if (!executeQuery(query, "")) {
+        return category;
+    }
+
+    if (query.next()) {
+        category.id = query.value(0).toInt();
+        category.name = query.value(1).toString();
+        category.createdAt = query.value(2).toDateTime();
+    }
+
+    return category;
+}
+
+bool Database::addCategory(const QString &name)
+{
+    QSqlQuery query = prepareQuery(
+        "INSERT INTO product_categories (name) VALUES (:name)");
+    query.bindValue(":name", name);
+
+    return executeQuery(query, "");
+}
+
+QString Database::generateSupplyNumber()
+{
+    QString prefix = "SUP";
+    QDateTime now = QDateTime::currentDateTime();
+    QString timestamp = now.toString("yyyyMMddHHmmss");
+
+    QString random = QString::number(QRandomGenerator::global()->bounded(10000)).rightJustified(4, '0');
+
+    return prefix + timestamp + random;
+}
+
 bool Database::checkProductAvailability(int productId, int requestedQuantity)
 {
     try

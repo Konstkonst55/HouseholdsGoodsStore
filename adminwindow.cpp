@@ -1,4 +1,5 @@
 #include "adminwindow.h"
+#include "authwindow.h"
 #include "ui_adminwindow.h"
 #include <QFileDialog>
 #include <QMessageBox>
@@ -10,10 +11,12 @@
 #include <QDialog>
 #include <QFormLayout>
 #include <QDialogButtonBox>
-#include "database.h"
+#include "addproductform.h"
+#include "addsupplyform.h"
+#include "salesreceiptform.h"
 
 AdminWindow::AdminWindow(QWidget *parent)
-    : QWidget(parent), ui(new Ui::AdminWindow)
+    : QWidget(parent), ui(new Ui::AdminWindow), currentUserId(1)
 {
     ui->setupUi(this);
 
@@ -27,6 +30,25 @@ AdminWindow::AdminWindow(QWidget *parent)
 
     ui->rbProduct->setChecked(true);
     onNavigationChanged();
+
+    connect(ui->leSearch, &QLineEdit::textChanged, this, [this](const QString &text) {
+        if (ui->rbProduct->isChecked()) {
+            searchProducts(text);
+        } else if (ui->rbSupply->isChecked()) {
+            searchSupplies(text);
+        } else if (ui->rbSale->isChecked()) {
+            searchSales(text);
+        }
+    });
+
+    connect(salesTable, &QTableWidget::cellDoubleClicked, this, [this](int row, int column) {
+        Q_UNUSED(column);
+        QTableWidgetItem *idItem = salesTable->item(row, 0);
+        if (idItem) {
+            int saleId = idItem->text().toInt();
+            showReceiptForm(saleId);
+        }
+    });
 }
 
 AdminWindow::~AdminWindow()
@@ -236,23 +258,115 @@ void AdminWindow::setupSalesPage()
 void AdminWindow::loadProductsData()
 {
     Database db;
-    if (!db.connectToDatabase())
-    {
+    if (!db.connectToDatabase()) {
         QMessageBox::critical(this, "Ошибка", "Не удалось подключиться к базе данных");
         return;
     }
 
     QList<Product> products = db.getAllProducts();
+    updateProductsTable(products);
+}
 
+void AdminWindow::loadSuppliesData()
+{
+    Database db;
+    if (!db.connectToDatabase()) {
+        QMessageBox::critical(this, "Ошибка", "Не удалось подключиться к базе данных");
+        return;
+    }
+
+    QList<Supply> supplies = db.getAllSupplies();
+    updateSuppliesTable(supplies);
+}
+
+void AdminWindow::loadSalesData()
+{
+    Database db;
+    if (!db.connectToDatabase()) {
+        QMessageBox::critical(this, "Ошибка", "Не удалось подключиться к базе данных");
+        return;
+    }
+
+    QList<Sale> sales = db.getAllSales();
+    updateSalesTable(sales);
+}
+
+void AdminWindow::searchProducts(const QString &text)
+{
+    Database db;
+    if (!db.connectToDatabase()) return;
+
+    QList<Product> allProducts = db.getAllProducts();
+    QList<Product> filteredProducts;
+
+    if (text.isEmpty()) {
+        filteredProducts = allProducts;
+    } else {
+        QString searchText = text.toLower();
+        foreach (const Product &product, allProducts) {
+            if (product.name.toLower().contains(searchText) ||
+                product.article.toLower().contains(searchText)) {
+                filteredProducts.append(product);
+            }
+        }
+    }
+
+    updateProductsTable(filteredProducts);
+}
+
+void AdminWindow::searchSupplies(const QString &text)
+{
+    Database db;
+    if (!db.connectToDatabase()) return;
+
+    QList<Supply> allSupplies = db.getAllSupplies();
+    QList<Supply> filteredSupplies;
+
+    if (text.isEmpty()) {
+        filteredSupplies = allSupplies;
+    } else {
+        QString searchText = text.toLower();
+        foreach (const Supply &supply, allSupplies) {
+            if (supply.supplierName.toLower().contains(searchText)) {
+                filteredSupplies.append(supply);
+            }
+        }
+    }
+
+    updateSuppliesTable(filteredSupplies);
+}
+
+void AdminWindow::searchSales(const QString &text)
+{
+    Database db;
+    if (!db.connectToDatabase()) return;
+
+    QList<Sale> allSales = db.getAllSales();
+    QList<Sale> filteredSales;
+
+    if (text.isEmpty()) {
+        filteredSales = allSales;
+    } else {
+        QString searchText = text.toLower();
+        foreach (const Sale &sale, allSales) {
+            if (sale.cashierName.toLower().contains(searchText)) {
+                filteredSales.append(sale);
+            }
+        }
+    }
+
+    updateSalesTable(filteredSales);
+}
+
+void AdminWindow::updateProductsTable(const QList<Product> &products)
+{
     productsTable->setRowCount(0);
 
-    for (int i = 0; i < products.size(); i++)
-    {
+    for (int i = 0; i < products.size(); i++) {
         const Product &product = products[i];
         productsTable->insertRow(i);
 
         QTableWidgetItem *idItem = new QTableWidgetItem(QString::number(product.id));
-
         productsTable->setItem(i, 0, idItem);
         productsTable->setItem(i, 1, new QTableWidgetItem(product.article));
         productsTable->setItem(i, 2, new QTableWidgetItem(product.name));
@@ -267,26 +381,15 @@ void AdminWindow::loadProductsData()
     productsTable->resizeColumnsToContents();
 }
 
-void AdminWindow::loadSuppliesData()
+void AdminWindow::updateSuppliesTable(const QList<Supply> &supplies)
 {
-    Database db;
-    if (!db.connectToDatabase())
-    {
-        QMessageBox::critical(this, "Ошибка", "Не удалось подключиться к базе данных");
-        return;
-    }
-
-    QList<Supply> supplies = db.getAllSupplies();
-
     suppliesTable->setRowCount(0);
 
-    for (int i = 0; i < supplies.size(); i++)
-    {
+    for (int i = 0; i < supplies.size(); i++) {
         const Supply &supply = supplies[i];
         suppliesTable->insertRow(i);
 
         QTableWidgetItem *idItem = new QTableWidgetItem(QString::number(supply.id));
-
         suppliesTable->setItem(i, 0, idItem);
         suppliesTable->setItem(i, 1, new QTableWidgetItem(supply.supplyNumber));
         suppliesTable->setItem(i, 2, new QTableWidgetItem(supply.supplierName));
@@ -303,26 +406,15 @@ void AdminWindow::loadSuppliesData()
     suppliesTable->resizeColumnsToContents();
 }
 
-void AdminWindow::loadSalesData()
+void AdminWindow::updateSalesTable(const QList<Sale> &sales)
 {
-    Database db;
-    if (!db.connectToDatabase())
-    {
-        QMessageBox::critical(this, "Ошибка", "Не удалось подключиться к базе данных");
-        return;
-    }
-
-    QList<Sale> sales = db.getAllSales();
-
     salesTable->setRowCount(0);
 
-    for (int i = 0; i < sales.size(); i++)
-    {
+    for (int i = 0; i < sales.size(); i++) {
         const Sale &sale = sales[i];
         salesTable->insertRow(i);
 
         QTableWidgetItem *idItem = new QTableWidgetItem(QString::number(sale.id));
-
         salesTable->setItem(i, 0, idItem);
         salesTable->setItem(i, 1, new QTableWidgetItem(sale.receiptNumber));
         salesTable->setItem(i, 2, new QTableWidgetItem(sale.saleDate.toString("dd.MM.yyyy HH:mm")));
@@ -373,7 +465,6 @@ void AdminWindow::onFileSaveAs()
 
 void AdminWindow::onReportProfit()
 {
-
     QDialog dialog(this);
     dialog.setWindowTitle("Отчет о прибыли");
     QFormLayout *form = new QFormLayout(&dialog);
@@ -386,44 +477,33 @@ void AdminWindow::onReportProfit()
     form->addRow("Начальная дата:", startDateEdit);
     form->addRow("Конечная дата:", endDateEdit);
 
-    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
-                                                       Qt::Horizontal, &dialog);
+    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     form->addRow(buttonBox);
 
     connect(buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
 
-    if (dialog.exec() == QDialog::Accepted)
-    {
+    if (dialog.exec() == QDialog::Accepted) {
         Database db;
-        if (!db.connectToDatabase())
-        {
-            QMessageBox::critical(this, "Ошибка", "Не удалось подключиться к базе данных");
+        if (!db.connectToDatabase()) {
+            QMessageBox::critical(this, "Ошибка", "Не удалось подключиться к БД");
             return;
         }
 
         ProfitReport report = db.generateProfitReport(startDateEdit->date(), endDateEdit->date());
 
+        // Показать отчет
         QString reportText = QString(
-                                 "Отчет о прибыли за период:\n"
-                                 "С %1 по %2\n\n"
-                                 "Общая выручка: %3 руб.\n"
-                                 "Общая себестоимость: %4 руб.\n"
-                                 "Прибыль: %5 руб.\n\n"
-                                 "Топ-10 популярных товаров:\n")
-                                 .arg(report.startDate.toString("dd.MM.yyyy"))
+                                 "Отчет о прибыли\n"
+                                 "Период: %1 - %2\n\n"
+                                 "Выручка: %3 руб.\n"
+                                 "Себестоимость: %4 руб.\n"
+                                 "Прибыль: %5 руб."
+                                 ).arg(report.startDate.toString("dd.MM.yyyy"))
                                  .arg(report.endDate.toString("dd.MM.yyyy"))
                                  .arg(report.totalRevenue, 0, 'f', 2)
                                  .arg(report.totalCost, 0, 'f', 2)
                                  .arg(report.totalProfit, 0, 'f', 2);
-
-        for (int i = 0; i < report.popularProducts.size(); i++)
-        {
-            reportText += QString("%1. %2 - %3 шт.\n")
-                              .arg(i + 1)
-                              .arg(report.popularProducts[i].first)
-                              .arg(report.popularProducts[i].second);
-        }
 
         QMessageBox::information(this, "Отчет о прибыли", reportText);
     }
@@ -431,8 +511,51 @@ void AdminWindow::onReportProfit()
 
 void AdminWindow::onReportPopular()
 {
-    QMessageBox::information(this, "Популярные товары",
-                             "Отчет о популярных товарах доступен в отчете о прибыли");
+    QDialog dialog(this);
+    dialog.setWindowTitle("Популярные товары");
+    QFormLayout *form = new QFormLayout(&dialog);
+
+    QDateEdit *startDateEdit = new QDateEdit(QDate::currentDate().addDays(-30));
+    startDateEdit->setCalendarPopup(true);
+    QDateEdit *endDateEdit = new QDateEdit(QDate::currentDate());
+    endDateEdit->setCalendarPopup(true);
+
+    form->addRow("Начальная дата:", startDateEdit);
+    form->addRow("Конечная дата:", endDateEdit);
+
+    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    form->addRow(buttonBox);
+
+    connect(buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+
+    if (dialog.exec() == QDialog::Accepted) {
+        Database db;
+        if (!db.connectToDatabase()) {
+            QMessageBox::critical(this, "Ошибка", "Не удалось подключиться к БД");
+            return;
+        }
+
+        ProfitReport report = db.generateProfitReport(startDateEdit->date(), endDateEdit->date());
+
+        // Показать только популярные товары
+        QString reportText = QString("Популярные товары\nПериод: %1 - %2\n\n")
+                                 .arg(report.startDate.toString("dd.MM.yyyy"))
+                                 .arg(report.endDate.toString("dd.MM.yyyy"));
+
+        if (report.popularProducts.isEmpty()) {
+            reportText += "Нет данных за выбранный период";
+        } else {
+            for (int i = 0; i < report.popularProducts.size(); i++) {
+                reportText += QString("%1. %2 - %3 шт.\n")
+                                  .arg(i + 1)
+                                  .arg(report.popularProducts[i].first)
+                                  .arg(report.popularProducts[i].second);
+            }
+        }
+
+        QMessageBox::information(this, "Популярные товары", reportText);
+    }
 }
 
 void AdminWindow::onHelpAbout()
@@ -481,17 +604,22 @@ void AdminWindow::onNavigationChanged()
 
 void AdminWindow::onAddProduct()
 {
-    QMessageBox::information(this, "Добавить товар",
-                             "Функция добавления товара будет реализована позже");
+    showAddProductForm();
 }
 
 void AdminWindow::onEditProduct()
 {
     int productId = getSelectedRowId(productsTable);
-    if (productId > 0)
-    {
-        QMessageBox::information(this, "Редактировать товар",
-                                 QString("Редактирование товара ID: %1\nФункция будет реализована позже").arg(productId));
+    if (productId > 0) {
+        showAddProductForm(productId);
+    }
+}
+
+void AdminWindow::showAddProductForm(int productId)
+{
+    AddProductForm form(productId, this);
+    if (form.exec() == QDialog::Accepted) {
+        loadProductsData();
     }
 }
 
@@ -528,8 +656,21 @@ void AdminWindow::onDeleteProduct()
 
 void AdminWindow::onAddSupply()
 {
-    QMessageBox::information(this, "Добавить поставку",
-                             "Функция добавления поставки будет реализована позже");
+    showAddSupplyForm();
+}
+
+void AdminWindow::showAddSupplyForm()
+{
+    AddSupplyForm form(this);
+    if (form.exec() == QDialog::Accepted) {
+        loadSuppliesData();
+    }
+}
+
+void AdminWindow::showReceiptForm(int saleId)
+{
+    SalesReceiptForm form(saleId, this);
+    form.exec();
 }
 
 void AdminWindow::onDeleteSupply()
@@ -615,6 +756,20 @@ void AdminWindow::onTableSelectionChanged()
         {
             actions[1]->setEnabled(hasSelection);
         }
+    }
+}
+
+void AdminWindow::on_pbAccount_clicked()
+{
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "Выход из аккаунта",
+                                                              "Вы уверены, что хотите выйти из аккаунта?",
+                                                              QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes) {
+        this->close();
+
+        AuthWindow *authWindow = new AuthWindow();
+        authWindow->show();
     }
 }
 

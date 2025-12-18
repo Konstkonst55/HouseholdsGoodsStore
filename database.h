@@ -91,6 +91,12 @@ struct ProfitReport {
     QList<QPair<QString, int>> popularProducts;
 };
 
+struct ProductCategory {
+    int id;
+    QString name;
+    QDateTime createdAt;
+};
+
 class Database : public QObject
 {
     Q_OBJECT
@@ -107,6 +113,7 @@ public:
     QList<Product> getAllProducts();
     QList<Supply> getAllSupplies();
     QList<Sale> getAllSales();
+    QList<ProductCategory> getAllCategories();
 
     bool addProduct(const Product &product);
     bool updateProduct(const Product &product);
@@ -136,6 +143,10 @@ public:
     User getUserById(int userId);
     Product getProductById(int productId);
     QString generateReceiptNumber();
+
+    ProductCategory getCategoryById(int categoryId);
+    bool addCategory(const QString &name);
+    QString generateSupplyNumber();
 
     bool checkProductAvailability(int productId, int requestedQuantity);
 
