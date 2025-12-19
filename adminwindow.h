@@ -48,7 +48,7 @@ private slots:
 
     void onTableSelectionChanged();
 
-    void on_pbAccount_clicked();
+    void on_pbAdminAccount_clicked();
 
 private:
     Ui::AdminWindow *ui;

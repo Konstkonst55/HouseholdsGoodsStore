@@ -54,7 +54,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pbAccount">
+      <widget class="QPushButton" name="pbAdminAccount">
        <property name="text">
         <string>Аккаунт</string>
        </property>

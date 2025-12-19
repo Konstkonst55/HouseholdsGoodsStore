@@ -492,7 +492,6 @@ void AdminWindow::onReportProfit()
 
         ProfitReport report = db.generateProfitReport(startDateEdit->date(), endDateEdit->date());
 
-        // Показать отчет
         QString reportText = QString(
                                  "Отчет о прибыли\n"
                                  "Период: %1 - %2\n\n"
@@ -538,7 +537,6 @@ void AdminWindow::onReportPopular()
 
         ProfitReport report = db.generateProfitReport(startDateEdit->date(), endDateEdit->date());
 
-        // Показать только популярные товары
         QString reportText = QString("Популярные товары\nПериод: %1 - %2\n\n")
                                  .arg(report.startDate.toString("dd.MM.yyyy"))
                                  .arg(report.endDate.toString("dd.MM.yyyy"));
@@ -759,7 +757,7 @@ void AdminWindow::onTableSelectionChanged()
     }
 }
 
-void AdminWindow::on_pbAccount_clicked()
+void AdminWindow::on_pbAdminAccount_clicked()
 {
     QMessageBox::StandardButton reply = QMessageBox::question(this, "Выход из аккаунта",
                                                               "Вы уверены, что хотите выйти из аккаунта?",
