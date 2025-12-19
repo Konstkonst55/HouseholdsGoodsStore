@@ -182,23 +182,32 @@ BEGIN
     WHERE id = OLD.sale_id;
 END;
 
-CREATE TRIGGER IF NOT EXISTS check_stock_before_cart
-BEFORE INSERT ON cart_items
+CREATE TRIGGER IF NOT EXISTS decrease_stock_on_cart_insert
+AFTER INSERT ON cart_items
 FOR EACH ROW
 BEGIN
-    SELECT CASE
-        WHEN (SELECT stock FROM products WHERE id = NEW.product_id) < NEW.quantity
-        THEN RAISE(ABORT, 'Недостаточно товара на складе для добавления в корзину')
-    END;
+    UPDATE products
+    SET stock = stock - NEW.quantity,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = NEW.product_id;
 END;
 
-CREATE TRIGGER IF NOT EXISTS check_stock_before_cart_update
-BEFORE UPDATE OF quantity ON cart_items
+CREATE TRIGGER IF NOT EXISTS update_stock_on_cart_update
+AFTER UPDATE OF quantity ON cart_items
 FOR EACH ROW
-WHEN NEW.quantity > OLD.quantity
 BEGIN
-    SELECT CASE
-        WHEN (SELECT stock FROM products WHERE id = NEW.product_id) < (NEW.quantity - OLD.quantity)
-        THEN RAISE(ABORT, 'Недостаточно товара на складе для обновления корзины')
-    END;
+    UPDATE products
+    SET stock = stock - (NEW.quantity - OLD.quantity),
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = NEW.product_id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS increase_stock_on_cart_delete
+AFTER DELETE ON cart_items
+FOR EACH ROW
+BEGIN
+    UPDATE products
+    SET stock = stock + OLD.quantity,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = OLD.product_id;
 END;
