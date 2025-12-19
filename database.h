@@ -128,7 +128,7 @@ public:
     ProfitReport generateProfitReport(const QDate &startDate, const QDate &endDate);
 
     QList<Product> getProductsForCashier();
-    bool createSale(Sale &sale, const QList<SaleItem> &items);
+    int createSale(Sale &sale, const QList<SaleItem> &items);
     QList<Sale> getSalesByCashier(int cashierId);
 
     QList<Product> getProductsForClient();

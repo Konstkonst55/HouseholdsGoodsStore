@@ -13,6 +13,8 @@ SOURCES += \
     addsupplyform.cpp \
     adminwindow.cpp \
     cashierwindow.cpp \
+    clientcartform.cpp \
+    clientwindow.cpp \
     database.cpp \
     main.cpp \
     authwindow.cpp \
@@ -24,6 +26,8 @@ HEADERS += \
     adminwindow.h \
     authwindow.h \
     cashierwindow.h \
+    clientcartform.h \
+    clientwindow.h \
     database.h \
     salesreceiptform.h
 
@@ -33,6 +37,8 @@ FORMS += \
     adminwindow.ui \
     authwindow.ui \
     cashierwindow.ui \
+    clientcartform.ui \
+    clientwindow.ui \
     salesreceiptform.ui
 
 # Default rules for deployment.

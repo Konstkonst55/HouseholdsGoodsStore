@@ -34,7 +34,7 @@
       </font>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tabSale">
       <attribute name="title">
@@ -57,34 +57,70 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="leSearch">
+          <widget class="QLineEdit" name="leSearchProduct">
            <property name="placeholderText">
-            <string>Поиск</string>
+            <string>Поиск...</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QTableWidget" name="twProducts"/>
+          <widget class="QTableWidget" name="twProducts">
+           <property name="editTriggers">
+            <set>QAbstractItemView::EditTrigger::AnyKeyPressed|QAbstractItemView::EditTrigger::DoubleClicked</set>
+           </property>
+           <property name="sortingEnabled">
+            <bool>true</bool>
+           </property>
+           <property name="supportedDragActions">
+            <set>Qt::DropAction::CopyAction</set>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0,0,0,0,0">
          <item>
-          <widget class="QLabel" name="label_2">
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="text">
-            <string>Итог</string>
-           </property>
-          </widget>
+          <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="1,0">
+           <item>
+            <widget class="QLabel" name="label_2">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Итог</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pbAccount">
+             <property name="font">
+              <font>
+               <pointsize>9</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Аккаунт</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
          <item>
-          <widget class="QTableWidget" name="twCart"/>
+          <widget class="QTableWidget" name="twCart">
+           <property name="editTriggers">
+            <set>QAbstractItemView::EditTrigger::AnyKeyPressed|QAbstractItemView::EditTrigger::DoubleClicked</set>
+           </property>
+           <property name="sortingEnabled">
+            <bool>true</bool>
+           </property>
+           <property name="supportedDragActions">
+            <set>Qt::DropAction::CopyAction</set>
+           </property>
+          </widget>
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="1,0">
@@ -177,8 +213,24 @@
      </widget>
      <widget class="QWidget" name="tabSales">
       <attribute name="title">
-       <string>Tab 2</string>
+       <string>Продажи</string>
       </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QLineEdit" name="leSearchSale">
+         <property name="placeholderText">
+          <string>Поиск...</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableView" name="twSales">
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>

@@ -1,6 +1,8 @@
 #include "authwindow.h"
 #include "ui_authwindow.h"
 #include "adminwindow.h"
+#include "cashierwindow.h"
+#include "clientwindow.h"
 #include "database.h"
 #include <QMessageBox>
 
@@ -60,6 +62,16 @@ void AuthWindow::on_pbLogin_clicked()
             adminWindow->show();
 
             this->close();
+        } else if (user.role == "Кассир") {
+            CashierWindow *cashierWindow = new CashierWindow();
+            cashierWindow->setCashierId(user.id);
+            cashierWindow->setCashierName(user.login);
+            cashierWindow->show();
+
+            this->close();
+        } else if (user.role == "Клиент"){
+            ClientWindow *clientWindow = new ClientWindow();
+            clientWindow->show();
         } else {
             ui->lIncorrectLogin->setText("Недостаточно прав");
             ui->lIncorrectLogin->setVisible(true);

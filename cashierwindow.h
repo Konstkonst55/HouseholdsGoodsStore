@@ -2,6 +2,8 @@
 #define CASHIERWINDOW_H
 
 #include <QWidget>
+#include <QStandardItemModel>
+#include "database.h"
 
 namespace Ui {
 class CashierWindow;
@@ -14,9 +16,27 @@ class CashierWindow : public QWidget
 public:
     explicit CashierWindow(QWidget *parent = nullptr);
     ~CashierWindow();
+    void setCashierId(int id);
+    void setCashierName(const QString &name);
+    void loadProducts();
+    void loadSales();
+
+private slots:
+    void on_pbSave_clicked();
+    void on_dsbDiscount_valueChanged(double arg1);
+    void on_leSearchProduct_textChanged(const QString &arg1);
+    void on_leSearchSale_textChanged(const QString &arg1);
+    void updateTotal();
+    void on_pbAccount_clicked();
+    void onCartItemDoubleClicked(int row, int column);
 
 private:
     Ui::CashierWindow *ui;
+    int cashierId;
+    QString cashierName;
+    QStandardItemModel *salesModel;
+    void addToCart(const QString &productName, double price, int maxQuantity);
+    void removeFromCart(int row);
 };
 
-#endif // CASHIERWINDOW_H
+#endif

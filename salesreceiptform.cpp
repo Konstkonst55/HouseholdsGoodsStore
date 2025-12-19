@@ -61,8 +61,7 @@ void SalesReceiptForm::loadReceiptData()
         addProductRow(item.productName, item.quantity, item.retailPrice);
     }
 
-    double discountPercent = (sale.discountAmount / sale.totalAmount) * 100;
-    ui->lDiscount->setText(QString("%1%").arg(discountPercent, 0, 'f', 1));
+    ui->lDiscount->setText(QString("%1%").arg(sale.discountAmount, 0, 'f', 1));
     ui->lTotal->setText(QString::number(sale.finalAmount, 'f', 2));
 }
 

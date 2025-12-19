@@ -514,7 +514,7 @@ QList<Product> Database::getProductsForCashier()
     return products;
 }
 
-bool Database::createSale(Sale &sale, const QList<SaleItem> &items)
+int Database::createSale(Sale &sale, const QList<SaleItem> &items)
 {
     try
     {
@@ -530,7 +530,7 @@ bool Database::createSale(Sale &sale, const QList<SaleItem> &items)
             {
                 db.rollback();
                 qDebug() << "Товар не найден:" << item.productId;
-                return false;
+                return -1;
             }
 
             int availableStock = checkQuery.value(0).toInt();
@@ -541,7 +541,7 @@ bool Database::createSale(Sale &sale, const QList<SaleItem> &items)
                                 .arg(item.productId)
                                 .arg(availableStock)
                                 .arg(item.quantity);
-                return false;
+                return -1;
             }
         }
 
@@ -564,7 +564,8 @@ bool Database::createSale(Sale &sale, const QList<SaleItem> &items)
         if (!executeQuery(query, ""))
         {
             db.rollback();
-            return false;
+            qDebug() << "Ошибка при вставке продажи:" << query.lastError().text();
+            return -1;
         }
 
         int saleId = query.lastInsertId().toInt();
@@ -572,36 +573,44 @@ bool Database::createSale(Sale &sale, const QList<SaleItem> &items)
         foreach (const SaleItem &item, items)
         {
             query = prepareQuery(
-                "INSERT INTO sale_items (sale_id, product_id, quantity, retail_price) "
-                "VALUES (:sale_id, :product_id, :quantity, :retail_price)");
+                "INSERT INTO sale_items (sale_id, product_id, quantity, retail_price, total_price) "
+                "VALUES (:sale_id, :product_id, :quantity, :retail_price, :total_price)");
 
             query.bindValue(":sale_id", saleId);
             query.bindValue(":product_id", item.productId);
             query.bindValue(":quantity", item.quantity);
             query.bindValue(":retail_price", item.retailPrice);
+            query.bindValue(":total_price", item.totalPrice);
 
             if (!executeQuery(query, ""))
             {
                 db.rollback();
-                return false;
+                qDebug() << "Ошибка при вставке товара продажи:" << query.lastError().text();
+                return -1;
             }
         }
 
         db.commit();
         sale.id = saleId;
-        return true;
+
+        Sale finalSale = getSaleDetails(saleId);
+        sale.finalAmount = finalSale.finalAmount;
+        sale.cashierName = finalSale.cashierName;
+        sale.customerName = finalSale.customerName;
+
+        return saleId;
     }
     catch (const std::exception &e)
     {
         db.rollback();
         qDebug() << "Ошибка при создании продажи:" << e.what();
-        return false;
+        return -1;
     }
     catch (...)
     {
         db.rollback();
         qDebug() << "Неизвестная ошибка при создании продажи";
-        return false;
+        return -1;
     }
 }
 
