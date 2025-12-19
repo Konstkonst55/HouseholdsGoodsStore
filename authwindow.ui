@@ -84,6 +84,18 @@
       <property name="spacing">
        <number>14</number>
       </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
       <item>
        <widget class="QLabel" name="lAuth">
         <property name="font">
@@ -102,6 +114,11 @@
       </item>
       <item>
        <widget class="QLineEdit" name="leLogin">
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
         <property name="frame">
          <bool>true</bool>
         </property>
@@ -115,6 +132,11 @@
       </item>
       <item>
        <widget class="QLineEdit" name="lePassword">
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
         <property name="inputMethodHints">
          <set>Qt::InputMethodHint::ImhHiddenText|Qt::InputMethodHint::ImhNoAutoUppercase|Qt::InputMethodHint::ImhNoPredictiveText|Qt::InputMethodHint::ImhSensitiveData</set>
         </property>
@@ -131,6 +153,11 @@
       </item>
       <item>
        <widget class="QPushButton" name="pbLogin">
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
         <property name="autoFillBackground">
          <bool>false</bool>
         </property>
