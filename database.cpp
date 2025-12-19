@@ -60,7 +60,6 @@ bool Database::initializeDatabase()
 
 bool Database::connectToDatabase(const QString &dbName)
 {
-
     if (db.isOpen())
     {
         db.close();
