@@ -383,13 +383,11 @@ void AdminWindow::updateProductsTable(const QList<Product> &products)
 
 void AdminWindow::updateSuppliesTable(const QList<Supply> &supplies)
 {
-    QMessageBox::critical(this, "ывыв", "ывывыв");
     suppliesTable->setRowCount(0);
 
     for (int i = 0; i < supplies.size(); i++) {
         const Supply &supply = supplies[i];
         suppliesTable->insertRow(i);
-        QMessageBox::critical(this, "ывыв", supply.supplierName);
 
         QTableWidgetItem *idItem = new QTableWidgetItem(QString::number(supply.id));
         suppliesTable->setItem(i, 0, idItem);
