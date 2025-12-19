@@ -24,7 +24,7 @@ class AdminWindow : public QWidget
     Q_OBJECT
 
 public:
-    explicit AdminWindow(QWidget *parent = nullptr);
+    explicit AdminWindow(QWidget *parent = nullptr, int userId = 1);
     ~AdminWindow();
 
 private slots:

@@ -13,7 +13,7 @@ class AddSupplyForm : public QDialog
     Q_OBJECT
 
 public:
-    explicit AddSupplyForm(QWidget *parent = nullptr);
+    explicit AddSupplyForm(QWidget *parent = nullptr, int userId = 1);
     ~AddSupplyForm();
 
 private slots:

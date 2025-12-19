@@ -3,10 +3,10 @@
 #include <QMessageBox>
 #include "addproductform.h"
 
-AddSupplyForm::AddSupplyForm(QWidget *parent)
+AddSupplyForm::AddSupplyForm(QWidget *parent, int userId)
     : QDialog(parent)
     , ui(new Ui::AddSupplyForm)
-    , currentUserId(1)
+    , currentUserId(userId)
 {
     ui->setupUi(this);
     ui->dteDate->setDateTime(QDateTime::currentDateTime());

@@ -64,7 +64,7 @@ void AuthWindow::on_pbLogin_clicked()
 
         if (user.role == "Администратор")
         {
-            AdminWindow *adminWindow = new AdminWindow();
+            AdminWindow *adminWindow = new AdminWindow(nullptr, user.id);
             adminWindow->show();
 
             this->close();
