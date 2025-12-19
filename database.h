@@ -138,7 +138,7 @@ public:
     QList<CartItem> getCartItems(int userId);
     bool clearCart(int userId);
 
-    bool createSaleForClient(Sale &sale, int customerId, double discountAmount);
+    bool createSaleForClient(Sale &sale);
 
     User getUserById(int userId);
     Product getProductById(int productId);

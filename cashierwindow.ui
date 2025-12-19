@@ -96,7 +96,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pbAccount">
+            <widget class="QPushButton" name="pbCashierAccount">
              <property name="font">
               <font>
                <pointsize>9</pointsize>

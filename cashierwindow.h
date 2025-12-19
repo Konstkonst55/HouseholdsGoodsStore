@@ -27,7 +27,7 @@ private slots:
     void on_leSearchProduct_textChanged(const QString &arg1);
     void on_leSearchSale_textChanged(const QString &arg1);
     void updateTotal();
-    void on_pbAccount_clicked();
+    void on_pbCashierAccount_clicked();
     void onCartItemDoubleClicked(int row, int column);
 
 private:

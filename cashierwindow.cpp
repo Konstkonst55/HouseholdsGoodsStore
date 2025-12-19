@@ -31,9 +31,6 @@ CashierWindow::CashierWindow(QWidget *parent) :
     ui->twCart->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->twSales->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-    connect(ui->dsbDiscount, SIGNAL(valueChanged(double)), this, SLOT(on_dsbDiscount_valueChanged(double)));
-    connect(ui->leSearchProduct, SIGNAL(textChanged(QString)), this, SLOT(on_leSearchProduct_textChanged(QString)));
-    connect(ui->leSearchSale, SIGNAL(textChanged(QString)), this, SLOT(on_leSearchSale_textChanged(QString)));
     connect(ui->twCart, &QTableWidget::cellDoubleClicked, this, &CashierWindow::onCartItemDoubleClicked);
 
     connect(ui->twSales, &QTableView::doubleClicked, this, [this](const QModelIndex &index) {
@@ -146,7 +143,7 @@ void CashierWindow::updateTotal()
     ui->lTotal->setText(QString::number(totalWithDiscount, 'f', 2));
 }
 
-void CashierWindow::on_pbAccount_clicked()
+void CashierWindow::on_pbCashierAccount_clicked()
 {
     QMessageBox::StandardButton reply = QMessageBox::question(this, "Выход из аккаунта",
                                                               "Вы уверены, что хотите выйти из аккаунта?",
@@ -159,6 +156,7 @@ void CashierWindow::on_pbAccount_clicked()
         authWindow->show();
     }
 }
+
 
 void CashierWindow::onCartItemDoubleClicked(int row, int column)
 {

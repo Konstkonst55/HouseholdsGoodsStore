@@ -1,4 +1,5 @@
 #include "database.h"
+#include <QCryptographicHash>
 
 Database::Database(QObject *parent) : QObject(parent)
 {
@@ -10,6 +11,15 @@ Database::~Database()
     {
         db.close();
     }
+}
+
+static QString hashPassword(const QString &password)
+{
+    QByteArray hash = QCryptographicHash::hash(
+        password.toUtf8(),
+        QCryptographicHash::Sha256
+        );
+    return hash.toHex();
 }
 
 bool Database::initializeDatabase()
@@ -118,25 +128,24 @@ User Database::authenticateUser(const QString &login, const QString &password)
     user.id = -1;
 
     QSqlQuery query = prepareQuery(
-        "SELECT id, login, password, role, created_at FROM users WHERE login = :login");
+        "SELECT id, login, password, role, created_at FROM users WHERE login = :login"
+        );
     query.bindValue(":login", login);
 
-    if (!executeQuery(query, ""))
-    {
+    if (!executeQuery(query, "")) {
         return user;
     }
 
-    if (query.next())
-    {
-        QString storedPassword = query.value(2).toString();
+    if (query.next()) {
+        QString storedHash = query.value("password").toString();
+        QString inputHash = hashPassword(password);
 
-        if (storedPassword == password)
-        {
-            user.id = query.value(0).toInt();
-            user.login = query.value(1).toString();
-            user.password = query.value(2).toString();
-            user.role = query.value(3).toString();
-            user.createdAt = query.value(4).toDateTime();
+        if (storedHash == inputHash) {
+            user.id = query.value("id").toInt();
+            user.login = query.value("login").toString();
+            user.password = storedHash;
+            user.role = query.value("role").toString();
+            user.createdAt = query.value("created_at").toDateTime();
         }
     }
 
@@ -658,7 +667,6 @@ QList<Sale> Database::getSalesByCashier(int cashierId)
 
 QList<Product> Database::getProductsForClient()
 {
-
     return getProductsForCashier();
 }
 
@@ -669,9 +677,10 @@ bool Database::addToCart(int userId, int productId, int quantity)
         db.transaction();
 
         QSqlQuery query = prepareQuery(
-            "INSERT OR REPLACE INTO cart_items (user_id, product_id, quantity) "
-            "VALUES (:user_id, :product_id, "
-            "COALESCE((SELECT quantity FROM cart_items WHERE user_id = :user_id AND product_id = :product_id), 0) + :quantity)");
+            "INSERT INTO cart_items (user_id, product_id, quantity) "
+            "VALUES (:user_id, :product_id, :quantity) "
+            "ON CONFLICT(user_id, product_id) DO UPDATE SET "
+            "quantity = quantity + :quantity");
 
         query.bindValue(":user_id", userId);
         query.bindValue(":product_id", productId);
@@ -686,16 +695,9 @@ bool Database::addToCart(int userId, int productId, int quantity)
         db.commit();
         return true;
     }
-    catch (const std::exception &e)
-    {
-        db.rollback();
-        qDebug() << "Ошибка при добавлении в корзину:" << e.what();
-        return false;
-    }
     catch (...)
     {
         db.rollback();
-        qDebug() << "Неизвестная ошибка при добавлении в корзину";
         return false;
     }
 }
@@ -713,33 +715,18 @@ bool Database::removeFromCart(int userId, int productId)
 
 bool Database::updateCartItemQuantity(int userId, int productId, int quantity)
 {
-    try
-    {
-        if (quantity <= 0)
-        {
-            return removeFromCart(userId, productId);
-        }
+    if (quantity <= 0)
+        return removeFromCart(userId, productId);
 
-        QSqlQuery query = prepareQuery(
-            "UPDATE cart_items SET quantity = :quantity "
-            "WHERE user_id = :user_id AND product_id = :product_id");
+    QSqlQuery query = prepareQuery(
+        "UPDATE cart_items SET quantity = :quantity "
+        "WHERE user_id = :user_id AND product_id = :product_id");
 
-        query.bindValue(":user_id", userId);
-        query.bindValue(":product_id", productId);
-        query.bindValue(":quantity", quantity);
+    query.bindValue(":user_id", userId);
+    query.bindValue(":product_id", productId);
+    query.bindValue(":quantity", quantity);
 
-        return executeQuery(query, "");
-    }
-    catch (const std::exception &e)
-    {
-        qDebug() << "Ошибка при обновлении корзины:" << e.what();
-        return false;
-    }
-    catch (...)
-    {
-        qDebug() << "Неизвестная ошибка при обновлении корзины";
-        return false;
-    }
+    return executeQuery(query, "");
 }
 
 QList<CartItem> Database::getCartItems(int userId)
@@ -787,80 +774,47 @@ bool Database::clearCart(int userId)
     return executeQuery(query, "");
 }
 
-bool Database::createSaleForClient(Sale &sale, int customerId, double discountAmount)
+bool Database::createSaleForClient(Sale &sale)
 {
     try
     {
         db.transaction();
 
-        QList<CartItem> cartItems = getCartItems(customerId);
-
+        QList<CartItem> cartItems = getCartItems(sale.customerId);
         if (cartItems.isEmpty())
         {
             db.rollback();
-            qDebug() << "Корзина пользователя пуста";
             return false;
         }
 
         double totalAmount = 0;
         QList<SaleItem> saleItems;
 
-        foreach (const CartItem &cartItem, cartItems)
+        for (const CartItem &cartItem : cartItems)
         {
+            SaleItem item;
+            item.productId = cartItem.productId;
+            item.quantity = cartItem.quantity;
+            item.retailPrice = cartItem.retailPrice;
+            item.totalPrice = cartItem.quantity * cartItem.retailPrice;
 
-            QSqlQuery checkQuery = prepareQuery(
-                "SELECT stock FROM products WHERE id = :product_id");
-            checkQuery.bindValue(":product_id", cartItem.productId);
-
-            if (!executeQuery(checkQuery, "") || !checkQuery.next())
-            {
-                db.rollback();
-                qDebug() << "Товар не найден:" << cartItem.productId;
-                return false;
-            }
-
-            int availableStock = checkQuery.value(0).toInt();
-            if (availableStock < cartItem.quantity)
-            {
-                db.rollback();
-                qDebug() << QString("Недостаточно товара на складе. Товар: %1, Доступно: %2, В корзине: %3")
-                                .arg(cartItem.productName)
-                                .arg(availableStock)
-                                .arg(cartItem.quantity);
-                return false;
-            }
-
-            SaleItem saleItem;
-            saleItem.productId = cartItem.productId;
-            saleItem.quantity = cartItem.quantity;
-            saleItem.retailPrice = cartItem.retailPrice;
-            saleItem.totalPrice = cartItem.retailPrice * cartItem.quantity;
-
-            saleItems.append(saleItem);
-            totalAmount += saleItem.totalPrice;
+            totalAmount += item.totalPrice;
+            saleItems.append(item);
         }
 
         sale.receiptNumber = generateReceiptNumber();
         sale.saleDate = QDateTime::currentDateTime();
-        sale.customerId = customerId;
-        sale.cashierId = -1;
         sale.totalAmount = totalAmount;
-        sale.discountAmount = discountAmount;
-        sale.finalAmount = totalAmount - discountAmount;
 
         QSqlQuery query = prepareQuery(
-            "INSERT INTO sales (receipt_number, sale_date, cashier_id, customer_id, "
-            "total_amount, discount_amount, final_amount) "
-            "VALUES (:receipt_number, :sale_date, :cashier_id, :customer_id, "
-            ":total_amount, :discount_amount, :final_amount)");
+            "INSERT INTO sales (receipt_number, sale_date, customer_id, total_amount, discount_amount) "
+            "VALUES (:receipt_number, :sale_date, :customer_id, :total_amount, :discount_amount)");
 
         query.bindValue(":receipt_number", sale.receiptNumber);
         query.bindValue(":sale_date", sale.saleDate);
-        query.bindValue(":cashier_id", QVariant());
         query.bindValue(":customer_id", sale.customerId);
         query.bindValue(":total_amount", sale.totalAmount);
         query.bindValue(":discount_amount", sale.discountAmount);
-        query.bindValue(":final_amount", sale.finalAmount);
 
         if (!executeQuery(query, ""))
         {
@@ -870,17 +824,17 @@ bool Database::createSaleForClient(Sale &sale, int customerId, double discountAm
 
         int saleId = query.lastInsertId().toInt();
 
-        foreach (const SaleItem &saleItem, saleItems)
+        for (const SaleItem &item : saleItems)
         {
             query = prepareQuery(
                 "INSERT INTO sale_items (sale_id, product_id, quantity, retail_price, total_price) "
                 "VALUES (:sale_id, :product_id, :quantity, :retail_price, :total_price)");
 
             query.bindValue(":sale_id", saleId);
-            query.bindValue(":product_id", saleItem.productId);
-            query.bindValue(":quantity", saleItem.quantity);
-            query.bindValue(":retail_price", saleItem.retailPrice);
-            query.bindValue(":total_price", saleItem.totalPrice);
+            query.bindValue(":product_id", item.productId);
+            query.bindValue(":quantity", item.quantity);
+            query.bindValue(":retail_price", item.retailPrice);
+            query.bindValue(":total_price", item.totalPrice);
 
             if (!executeQuery(query, ""))
             {
@@ -889,14 +843,13 @@ bool Database::createSaleForClient(Sale &sale, int customerId, double discountAm
             }
         }
 
-        query = prepareQuery(
-            "DELETE FROM cart_items WHERE user_id = :user_id");
-        query.bindValue(":user_id", customerId);
+        // 🔥 ОЧИСТКА КОРЗИНЫ → триггер вернёт ничего (уже продано)
+        query = prepareQuery("DELETE FROM cart_items WHERE user_id = :user_id");
+        query.bindValue(":user_id", sale.customerId);
 
         if (!executeQuery(query, ""))
         {
             db.rollback();
-            qDebug() << "Ошибка при очистке корзины";
             return false;
         }
 
@@ -904,16 +857,9 @@ bool Database::createSaleForClient(Sale &sale, int customerId, double discountAm
         sale.id = saleId;
         return true;
     }
-    catch (const std::exception &e)
-    {
-        db.rollback();
-        qDebug() << "Ошибка при создании продажи для клиента:" << e.what();
-        return false;
-    }
     catch (...)
     {
         db.rollback();
-        qDebug() << "Неизвестная ошибка при создании продажи для клиента";
         return false;
     }
 }
