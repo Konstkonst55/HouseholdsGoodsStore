@@ -204,7 +204,6 @@ void CashierWindow::on_pbSave_clicked()
 
     double totalWithoutDiscount = ui->lCostWithoutDiscount->text().toDouble();
     double discount = ui->dsbDiscount->value();
-    double discountAmount = totalWithoutDiscount * (discount / 100.0);
 
     Database db;
     if (!db.connectToDatabase()) {
