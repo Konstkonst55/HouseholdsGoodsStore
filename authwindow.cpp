@@ -7,8 +7,7 @@
 #include <QMessageBox>
 
 AuthWindow::AuthWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::AuthWindow)
+    : QMainWindow(parent), ui(new Ui::AuthWindow)
 {
     ui->setupUi(this);
 
@@ -28,51 +27,67 @@ void AuthWindow::on_pbLogin_clicked()
 
     ui->lIncorrectLogin->setVisible(false);
 
-    if (login.isEmpty() || password.isEmpty()) {
+    if (login.isEmpty() || password.isEmpty())
+    {
         ui->lIncorrectLogin->setText("Заполните все поля");
         ui->lIncorrectLogin->setVisible(true);
 
         return;
     }
 
-    Database* db = new Database(this);
+    Database *db = new Database(this);
 
-    if (!db->initializeDatabase()) {
+    if (!db->initializeDatabase())
+    {
         QMessageBox::critical(this, "Ошибка", "Не удалось инициализировать базу данных");
         exit(1);
     }
 
-    if (!db->connectToDatabase()) {
+    if (!db->connectToDatabase())
+    {
         QMessageBox::critical(this, "Ошибка", "Не удалось подключиться к базе данных");
         exit(1);
     }
 
     User user = db->authenticateUser(login, password);
 
-    if (user.id == -1) {
+    if (user.id == -1)
+    {
         ui->lIncorrectLogin->setText("Неверное имя пользователя или пароль");
         ui->lIncorrectLogin->setVisible(true);
         ui->lePassword->clear();
         ui->lePassword->setFocus();
-    } else {
+    }
+    else
+    {
         ui->lIncorrectLogin->setVisible(false);
 
-        if (user.role == "Администратор") {
+        if (user.role == "Администратор")
+        {
             AdminWindow *adminWindow = new AdminWindow();
             adminWindow->show();
 
             this->close();
-        } else if (user.role == "Кассир") {
+        }
+        else if (user.role == "Кассир")
+        {
             CashierWindow *cashierWindow = new CashierWindow();
             cashierWindow->setCashierId(user.id);
             cashierWindow->setCashierName(user.login);
             cashierWindow->show();
 
             this->close();
-        } else if (user.role == "Клиент"){
+        }
+        else if (user.role == "Клиент")
+        {
             ClientWindow *clientWindow = new ClientWindow();
+            clientWindow->setUserId(user.id);
             clientWindow->show();
-        } else {
+
+            this->close();
+        }
+        else
+        {
             ui->lIncorrectLogin->setText("Недостаточно прав");
             ui->lIncorrectLogin->setVisible(true);
         }
