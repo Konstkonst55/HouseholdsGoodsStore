@@ -1,3 +1,4 @@
+// windowfactory.h - добавляем новую функцию
 #ifndef WINDOWFACTORY_H
 #define WINDOWFACTORY_H
 
@@ -21,6 +22,7 @@ class WindowFactory {
 public:
     static BaseWindow* createWindow(const QString &role, User &user);
     static bool isSupportedRole(const QString &role);
+    static QWidget* createAndShowWindow(const QString &role, User &user, QWidget* parent = nullptr);
 };
 
 #endif // WINDOWFACTORY_H

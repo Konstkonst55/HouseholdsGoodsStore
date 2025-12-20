@@ -11,18 +11,19 @@ public:
 
     void initialize() override {
         window = new AdminWindow(nullptr, userId);
+        window->setAttribute(Qt::WA_DeleteOnClose);
     }
 
     void showWindow() override {
         if (window) {
             window->show();
+            window->raise();
+            window->activateWindow();
         }
     }
 
     ~AdminWindowProduct() {
-        if (window) {
-            window->deleteLater();
-        }
+
     }
 };
 
@@ -37,18 +38,19 @@ public:
         window = new CashierWindow();
         window->setCashierId(user.id);
         window->setCashierName(user.login);
+        window->setAttribute(Qt::WA_DeleteOnClose);
     }
 
     void showWindow() override {
         if (window) {
             window->show();
+            window->raise();
+            window->activateWindow();
         }
     }
 
     ~CashierWindowProduct() {
-        if (window) {
-            window->deleteLater();
-        }
+
     }
 };
 
@@ -63,40 +65,74 @@ public:
     void initialize() override {
         window = new ClientWindow();
         window->setUserId(userId);
+        window->setAttribute(Qt::WA_DeleteOnClose);
     }
 
     void showWindow() override {
         if (window) {
             window->show();
+            window->raise();
+            window->activateWindow();
         }
     }
 
     ~ClientWindowProduct() {
-        if (window) {
-            window->deleteLater();
-        }
+
     }
 };
 
 BaseWindow* WindowFactory::createWindow(const QString &role, User &user) {
+    BaseWindow* windowProduct = nullptr;
+
     if (role == "Администратор") {
-        BaseWindow *window = new AdminWindowProduct(user.id);
-        window->initialize();
-        return window;
+        windowProduct = new AdminWindowProduct(user.id);
     }
     else if (role == "Кассир") {
-        BaseWindow *window = new CashierWindowProduct(user);
-        window->initialize();
-        return window;
+        windowProduct = new CashierWindowProduct(user);
     }
     else if (role == "Клиент") {
-        BaseWindow *window = new ClientWindowProduct(user.id);
-        window->initialize();
-        return window;
+        windowProduct = new ClientWindowProduct(user.id);
     }
 
-    qWarning() << "Unsupported role:" << role;
-    return nullptr;
+    if (windowProduct) {
+        windowProduct->initialize();
+        windowProduct->deleteLater();
+    }
+    else {
+        qWarning() << "Unsupported role:" << role;
+    }
+
+    return windowProduct;
+}
+
+QWidget* WindowFactory::createAndShowWindow(const QString &role, User &user, QWidget* parent) {
+    QWidget* window = nullptr;
+
+    if (role == "Администратор") {
+        window = new AdminWindow(parent, user.id);
+    }
+    else if (role == "Кассир") {
+        CashierWindow* cashierWindow = new CashierWindow(parent);
+        cashierWindow->setCashierId(user.id);
+        cashierWindow->setCashierName(user.login);
+        window = cashierWindow;
+    }
+    else if (role == "Клиент") {
+        ClientWindow* clientWindow = new ClientWindow(parent);
+        clientWindow->setUserId(user.id);
+        window = clientWindow;
+    }
+
+    if (window) {
+        window->show();
+        window->raise();
+        window->activateWindow();
+    }
+    else {
+        qWarning() << "Unsupported role:" << role;
+    }
+
+    return window;
 }
 
 bool WindowFactory::isSupportedRole(const QString &role) {
