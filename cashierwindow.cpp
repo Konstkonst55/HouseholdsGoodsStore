@@ -14,6 +14,21 @@ CashierWindow::CashierWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    cartSubject = new CartSubject("CashierCart", this);
+    loggerObserver = new LoggerObserver("CashierLogger", true);
+    uiNotificationObserver = new UINotificationObserver("CashierUINotifications");
+
+    cartSubject->attach(loggerObserver);
+    cartSubject->attach(uiNotificationObserver);
+
+    connect(ui->twCart, &QTableWidget::itemChanged, this, [this]() {
+        cartSubject->notify("Корзина обновлена");
+    });
+
+    connect(ui->pbSave, &QPushButton::clicked, this, [this]() {
+        cartSubject->notify("Продажа завершена");
+    });
+
     ui->twProducts->setColumnCount(4);
     ui->twProducts->setHorizontalHeaderLabels({"Наименование", "Стоимость", "Количество", ""});
 
@@ -53,6 +68,12 @@ CashierWindow::CashierWindow(QWidget *parent) :
 CashierWindow::~CashierWindow()
 {
     delete ui;
+    if (cartSubject) {
+        cartSubject->detach(loggerObserver);
+        cartSubject->detach(uiNotificationObserver);
+    }
+    delete loggerObserver;
+    delete uiNotificationObserver;
 }
 
 void CashierWindow::setCashierId(int id)

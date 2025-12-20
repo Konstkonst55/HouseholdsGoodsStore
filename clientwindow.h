@@ -5,6 +5,7 @@
 #include <QStandardItemModel>
 #include "database.h"
 #include "clientcartform.h"
+#include "cartobserver.h"
 
 namespace Ui {
 class ClientWindow;
@@ -34,6 +35,8 @@ private:
     QStandardItemModel *productsModel;
     QList<Product> allProducts;
     ClientCartForm *cartForm = nullptr;
+    CartSubject *cartSubject;
+    LoggerObserver *loggerObserver;
 
     void loadProducts();
     void applyFiltersAndSort(const QString &searchText, int sortIndex);

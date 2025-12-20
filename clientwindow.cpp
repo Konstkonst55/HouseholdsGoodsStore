@@ -14,6 +14,10 @@ ClientWindow::ClientWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    cartSubject = new CartSubject("ClientCart", this);
+    loggerObserver = new LoggerObserver("ClientLogger", true);
+    cartSubject->attach(loggerObserver);
+
     productsModel = new QStandardItemModel(this);
     setupProductsTable();
 
@@ -29,9 +33,10 @@ ClientWindow::ClientWindow(QWidget *parent)
 ClientWindow::~ClientWindow()
 {
     delete ui;
-    if (cartForm) {
-        cartForm->deleteLater();
+    if (cartSubject) {
+        cartSubject->detach(loggerObserver);
     }
+    delete loggerObserver;
 }
 
 void ClientWindow::setUserId(int id){
@@ -165,11 +170,16 @@ void ClientWindow::updateCartCount()
 
     QList<CartItem> cartItems = db.getCartItems(userId);
     int totalCount = 0;
+
     for (const CartItem &item : cartItems) {
         totalCount += item.quantity;
     }
 
     ui->pbOpenCart->setText(QString("Корзина (%1)").arg(totalCount));
+
+    if (cartSubject) {
+        cartSubject->notify(QString("Товаров в корзине: %1").arg(totalCount));
+    }
 }
 
 void ClientWindow::on_pbClientAccount_clicked()

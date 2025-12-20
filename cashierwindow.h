@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QStandardItemModel>
 #include "database.h"
+#include "cartobserver.h"
 
 namespace Ui {
 class CashierWindow;
@@ -37,6 +38,9 @@ private:
     QStandardItemModel *salesModel;
     void addToCart(const QString &productName, double price, int maxQuantity);
     void removeFromCart(int row);
+    CartSubject *cartSubject;
+    LoggerObserver *loggerObserver;
+    UINotificationObserver *uiNotificationObserver;
 };
 
 #endif
