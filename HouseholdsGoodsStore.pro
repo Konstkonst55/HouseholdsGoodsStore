@@ -12,24 +12,28 @@ SOURCES += \
     addproductform.cpp \
     addsupplyform.cpp \
     adminwindow.cpp \
+    cartobserver.cpp \
     cashierwindow.cpp \
     clientcartform.cpp \
     clientwindow.cpp \
     database.cpp \
     main.cpp \
     authwindow.cpp \
-    salesreceiptform.cpp
+    salesreceiptform.cpp \
+    windowfactory.cpp
 
 HEADERS += \
     addproductform.h \
     addsupplyform.h \
     adminwindow.h \
     authwindow.h \
+    cartobserver.h \
     cashierwindow.h \
     clientcartform.h \
     clientwindow.h \
     database.h \
-    salesreceiptform.h
+    salesreceiptform.h \
+    windowfactory.h
 
 FORMS += \
     addproductform.ui \
